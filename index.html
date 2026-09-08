@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Badminton Lesson Plan</title>
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <style>
+        body {
+            background: #f5f7fb;
+        }
+
+        .page-wrap {
+            max-width: 1100px;
+            margin: 2rem auto;
+            background: #fff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .section-title {
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container page-wrap">
+        <h1 class="mb-4">Badminton Lesson Plan</h1>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <label for="coachName" class="form-label">Coach Name</label>
+                <input id="coachName" class="form-control" type="text" />
+            </div>
+            <div class="col-md-6">
+                <label for="venue" class="form-label">Venue</label>
+                <input id="venue" class="form-control" type="text" />
+            </div>
+            <div class="col-md-6">
+                <label for="lessonDateTime" class="form-label">Date & Time</label>
+                <input id="lessonDateTime" class="form-control" type="datetime-local" />
+            </div>
+            <div class="col-md-6">
+                <label for="classType" class="form-label">Class Type</label>
+                <select id="classType" class="form-select">
+                    <option value="Individual">Individual</option>
+                    <option value="Group">Group</option>
+                </select>
+            </div>
+        </div>
+
+        <h2 class="section-title">Lesson Activities</h2>
+        <div class="table-responsive mb-4">
+            <table class="table table-bordered align-middle" id="lessonTable">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 20%;">Title</th>
+                        <th>Description</th>
+                        <th style="width: 15%;">Duration (min)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input class="form-control lesson-title" type="text" /></td>
+                        <td><textarea class="form-control lesson-description"></textarea></td>
+                        <td><input class="form-control lesson-duration" type="number" min="0" /></td>
+                    </tr>
+                    <tr>
+                        <td><input class="form-control lesson-title" type="text" /></td>
+                        <td><textarea class="form-control lesson-description"></textarea></td>
+                        <td><input class="form-control lesson-duration" type="number" min="0" /></td>
+                    </tr>
+                    <tr>
+                        <td><input class="form-control lesson-title" type="text" /></td>
+                        <td><textarea class="form-control lesson-description"></textarea></td>
+                        <td><input class="form-control lesson-duration" type="number" min="0" /></td>
+                    </tr>
+                    <tr>
+                        <td><input class="form-control lesson-title" type="text" /></td>
+                        <td><textarea class="form-control lesson-description"></textarea></td>
+                        <td><input class="form-control lesson-duration" type="number" min="0" /></td>
+                    </tr>
+                    <tr>
+                        <td><input class="form-control lesson-title" type="text" /></td>
+                        <td><textarea class="form-control lesson-description"></textarea></td>
+                        <td><input class="form-control lesson-duration" type="number" min="0" /></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2 class="section-title">Review & Evaluate</h2>
+        <div class="table-responsive mb-4">
+            <table class="table table-bordered align-middle" id="reviewTable">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 50%;">Review</th>
+                        <th style="width: 50%;">Evaluate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><textarea class="form-control review-text"></textarea></td>
+                        <td><textarea class="form-control evaluate-text"></textarea></td>
+                    </tr>
+                    <tr>
+                        <td><textarea class="form-control review-text"></textarea></td>
+                        <td><textarea class="form-control evaluate-text"></textarea></td>
+                    </tr>
+                    <tr>
+                        <td><textarea class="form-control review-text"></textarea></td>
+                        <td><textarea class="form-control evaluate-text"></textarea></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="btn-row">
+            <button id="saveBtn" class="btn btn-primary" type="button">Save Lesson Plan</button>
+            <button id="loadBtn" class="btn btn-outline-secondary" type="button">Load Saved Plan</button>
+            <button id="pdfBtn" class="btn btn-success" type="button">Export as PDF</button>
+            <button id="clearBtn" class="btn btn-outline-danger" type="button">Clear Form</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+    <script>
+        const storageKey = "badminton.lesson.plan.v1";
+
+        function getLessonRows() {
+            const rows = [];
+            const trList = document.querySelectorAll("#lessonTable tbody tr");
+
+            trList.forEach((row) => {
+                rows.push({
+                    title: row.querySelector(".lesson-title").value.trim(),
+                    description: row.querySelector(".lesson-description").value.trim(),
+                    duration: row.querySelector(".lesson-duration").value.trim()
+                });
+            });
+
+            return rows;
+        }
+
+        function getReviewRows() {
+            const rows = [];
+            const trList = document.querySelectorAll("#reviewTable tbody tr");
+
+            trList.forEach((row) => {
+                rows.push({
+                    review: row.querySelector(".review-text").value.trim(),
+                    evaluate: row.querySelector(".evaluate-text").value.trim()
+                });
+            });
+
+            return rows;
+        }
+
+        function getFormData() {
+            return {
+                coachName: document.getElementById("coachName").value.trim(),
+                venue: document.getElementById("venue").value.trim(),
+                lessonDateTime: document.getElementById("lessonDateTime").value,
+                classType: document.getElementById("classType").value,
+                lessons: getLessonRows(),
+                reviews: getReviewRows()
+            };
+        }
+
+        function setFormData(data) {
+            document.getElementById("coachName").value = data.coachName ?? "";
+            document.getElementById("venue").value = data.venue ?? "";
+            document.getElementById("lessonDateTime").value = data.lessonDateTime ?? "";
+            document.getElementById("classType").value = data.classType ?? "Individual";
+
+            const lessonRows = document.querySelectorAll("#lessonTable tbody tr");
+            lessonRows.forEach((row, index) => {
+                const item = data.lessons?.[index] ?? {};
+                row.querySelector(".lesson-title").value = item.title ?? "";
+                row.querySelector(".lesson-description").value = item.description ?? "";
+                row.querySelector(".lesson-duration").value = item.duration ?? "";
+            });
+
+            const reviewRows = document.querySelectorAll("#reviewTable tbody tr");
+            reviewRows.forEach((row, index) => {
+                const item = data.reviews?.[index] ?? {};
+                row.querySelector(".review-text").value = item.review ?? "";
+                row.querySelector(".evaluate-text").value = item.evaluate ?? "";
+            });
+        }
+
+        function savePlan() {
+            const data = getFormData();
+            localStorage.setItem(storageKey, JSON.stringify(data));
+            alert("Lesson plan saved.");
+        }
+
+        function loadPlan() {
+            const json = localStorage.getItem(storageKey);
+            if (!json) {
+                alert("No saved lesson plan found.");
+                return;
+            }
+
+            setFormData(JSON.parse(json));
+            alert("Saved lesson plan loaded.");
+        }
+
+        function clearPlan() {
+            setFormData({
+                coachName: "",
+                venue: "",
+                lessonDateTime: "",
+                classType: "Individual",
+                lessons: [{}, {}, {}, {}, {}],
+                reviews: [{}, {}, {}]
+            });
+        }
+
+        function exportPdf() {
+            const data = getFormData();
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(16);
+            doc.text("Badminton Lesson Plan", 14, 16);
+
+            doc.setFontSize(11);
+            doc.text(`Coach Name: ${data.coachName || "-"}`, 14, 26);
+            doc.text(`Venue: ${data.venue || "-"}`, 14, 33);
+            doc.text(`Date & Time: ${data.lessonDateTime || "-"}`, 14, 40);
+            doc.text(`Class Type: ${data.classType || "-"}`, 14, 47);
+
+            doc.autoTable({
+                startY: 54,
+                head: [["Title", "Description", "Duration (min)"]],
+                body: data.lessons.map(x => [x.title || "", x.description || "", x.duration || ""]),
+                styles: { fontSize: 10, cellPadding: 2 }
+            });
+
+            doc.autoTable({
+                startY: doc.lastAutoTable.finalY + 8,
+                head: [["Review", "Evaluate"]],
+                body: data.reviews.map(x => [x.review || "", x.evaluate || ""]),
+                styles: { fontSize: 10, cellPadding: 2 }
+            });
+
+            const safeCoachName = (data.coachName || "lesson-plan").replace(/[^a-z0-9]/gi, "-").toLowerCase();
+            doc.save(`${safeCoachName}-badminton-lesson-plan.pdf`);
+        }
+
+        document.getElementById("saveBtn").addEventListener("click", savePlan);
+        document.getElementById("loadBtn").addEventListener("click", loadPlan);
+        document.getElementById("pdfBtn").addEventListener("click", exportPdf);
+        document.getElementById("clearBtn").addEventListener("click", clearPlan);
+
+        // Auto-load if data exists.
+        if (localStorage.getItem(storageKey)) {
+            loadPlan();
+        }
+    </script>
+</body>
+
+</html>
