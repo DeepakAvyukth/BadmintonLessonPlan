@@ -49,19 +49,16 @@
                 <input id="coachName" class="form-control" type="text" />
             </div>
             <div class="col-md-6">
-                <label for="venue" class="form-label">Venue</label>
+                <label for="venue" class="form-label">Venue</label> 
                 <input id="venue" class="form-control" type="text" />
             </div>
             <div class="col-md-6">
-                <label for="lessonDateTime" class="form-label">Date & Time</label>
+                <label for="lessonDateTime" class="form-label">Date &amp; Time</label>
                 <input id="lessonDateTime" class="form-control" type="datetime-local" />
             </div>
             <div class="col-md-6">
-                <label for="classType" class="form-label">Class Type</label>
-                <select id="classType" class="form-select">
-                    <option value="Individual">Individual</option>
-                    <option value="Group">Group</option>
-                </select>
+                <label for="participants" class="form-label">Students / Participants</label>
+                <textarea id="participants" class="form-control" placeholder="Enter names separated by commas or new lines"></textarea>
             </div>
         </div>
 
@@ -105,7 +102,7 @@
             </table>
         </div>
 
-        <h2 class="section-title">Review & Evaluate</h2>
+        <h2 class="section-title">Review &amp; Evaluate</h2>
         <div class="table-responsive mb-4">
             <table class="table table-bordered align-middle" id="reviewTable">
                 <thead class="table-light">
@@ -173,12 +170,31 @@
             return rows;
         }
 
+        function getParticipants() {
+            const raw = document.getElementById("participants").value.trim();
+
+            if (!raw) {
+                return [];
+            }
+
+            return raw
+                .split(/[\n,]/g)
+                .map((name) => name.trim())
+                .filter((name) => name.length > 0);
+        }
+
+        function setParticipants(participants) {
+            document.getElementById("participants").value = Array.isArray(participants)
+                ? participants.join("\n")
+                : "";
+        }
+
         function getFormData() {
             return {
                 coachName: document.getElementById("coachName").value.trim(),
                 venue: document.getElementById("venue").value.trim(),
                 lessonDateTime: document.getElementById("lessonDateTime").value,
-                classType: document.getElementById("classType").value,
+                participants: getParticipants(),
                 lessons: getLessonRows(),
                 reviews: getReviewRows()
             };
@@ -188,7 +204,7 @@
             document.getElementById("coachName").value = data.coachName ?? "";
             document.getElementById("venue").value = data.venue ?? "";
             document.getElementById("lessonDateTime").value = data.lessonDateTime ?? "";
-            document.getElementById("classType").value = data.classType ?? "Individual";
+            setParticipants(data.participants ?? []);
 
             const lessonRows = document.querySelectorAll("#lessonTable tbody tr");
             lessonRows.forEach((row, index) => {
@@ -228,7 +244,7 @@
                 coachName: "",
                 venue: "",
                 lessonDateTime: "",
-                classType: "Individual",
+                participants: [],
                 lessons: [{}, {}, {}, {}, {}],
                 reviews: [{}, {}, {}]
             });
@@ -246,24 +262,37 @@
             doc.text(`Coach Name: ${data.coachName || "-"}`, 14, 26);
             doc.text(`Venue: ${data.venue || "-"}`, 14, 33);
             doc.text(`Date & Time: ${data.lessonDateTime || "-"}`, 14, 40);
-            doc.text(`Class Type: ${data.classType || "-"}`, 14, 47);
+            doc.text(`Students / Participants: ${data.participants.length ? data.participants.join(", ") : "-"}`, 14, 47);
 
             doc.autoTable({
                 startY: 54,
                 head: [["Title", "Description", "Duration (min)"]],
-                body: data.lessons.map(x => [x.title || "", x.description || "", x.duration || ""]),
+                body: data.lessons.map((x) => [x.title || "", x.description || "", x.duration || ""]),
                 styles: { fontSize: 10, cellPadding: 2 }
             });
 
             doc.autoTable({
                 startY: doc.lastAutoTable.finalY + 8,
                 head: [["Review", "Evaluate"]],
-                body: data.reviews.map(x => [x.review || "", x.evaluate || ""]),
+                body: data.reviews.map((x) => [x.review || "", x.evaluate || ""]),
                 styles: { fontSize: 10, cellPadding: 2 }
             });
 
-            const safeCoachName = (data.coachName || "lesson-plan").replace(/[^a-z0-9]/gi, "-").toLowerCase();
-            doc.save(`${safeCoachName}-badminton-lesson-plan.pdf`);
+            const defaultFileName = `${(data.coachName || "lesson-plan")
+                .replace(/[^a-z0-9]/gi, "-")
+                .toLowerCase()}-badminton-lesson-plan`;
+
+            const fileNameInput = prompt("Enter PDF file name:", defaultFileName);
+            if (fileNameInput === null) {
+                return;
+            }
+
+            const safeFileName = fileNameInput.trim()
+                .replace(/[^a-z0-9._-]/gi, "-")
+                .replace(/-+/g, "-")
+                .replace(/^\-|\-$/g, "") || defaultFileName;
+
+            doc.save(`${safeFileName}.pdf`);
         }
 
         document.getElementById("saveBtn").addEventListener("click", savePlan);
